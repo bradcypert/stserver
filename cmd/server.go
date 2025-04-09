@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/bradcypert/stserver/internal"
+	"github.com/bradcypert/stserver/internal/handlers"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -23,6 +26,15 @@ var rdb = redis.NewClient(&redis.Options{
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Setup Postgres
+	dsn := os.Getenv("postgres_dsn")
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		fmt.Println("Failed to connect to DB:", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
 	// Handle SIGINT/SIGTERM
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -33,10 +45,21 @@ func main() {
 	go gameEngine.StartTickEngine(ctx)
 
 	// Simulate a scheduled build
-	err := scheduleBuildComplete("port-42", "trade_office", 10*time.Second)
+	err = scheduleBuildComplete("port-42", "trade_office", 10*time.Second)
 	if err != nil {
 		fmt.Println("Schedule error:", err)
 	}
+
+	playerHandler := handlers.NewPlayerHandler(pool)
+	http.HandleFunc("/players", playerHandler.CreatePlayer)
+
+	go func() {
+		logger.Info("Server started on :4200")
+		if err := http.ListenAndServe("4200"); err != http.ErrServerClosed {
+			logger.Error("ListenAndServe(): %s\n", err)
+			panic(err)
+		}
+	}()
 
 	// Wait for shutdown signal
 	<-sigs
@@ -45,7 +68,7 @@ func main() {
 	cancel() // cancel the context so tick engine can stop
 
 	// Give some time for cleanup (optional)
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 	fmt.Println("Goodbye.")
 }
 
