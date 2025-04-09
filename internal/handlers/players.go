@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/bradcypert/stserver/internal/db"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,9 +19,9 @@ func NewPlayerHandler(pool *pgxpool.Pool) *PlayerHandler {
 }
 
 type createPlayerRequest struct {
-	Username    string `json:"username"`
+	Email       string `json:"email"`
 	DisplayName string `json:"display_name"`
-	Faction     string `json:"faction"`
+	Faction     int32  `json:"faction"`
 }
 
 func (h *PlayerHandler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,7 @@ func (h *PlayerHandler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	player, err := h.queries.CreatePlayer(r.Context(), db.CreatePlayerParams{
-		Username:    req.Username,
+		Email:       req.Email,
 		DisplayName: req.DisplayName,
 		Faction:     req.Faction,
 	})

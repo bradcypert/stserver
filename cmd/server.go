@@ -28,6 +28,9 @@ func main() {
 
 	// Setup Postgres
 	dsn := os.Getenv("postgres_dsn")
+	if dsn == "" {
+		dsn = "postgres://dev:devpass@localhost:5432/sovereign?sslmode=disable"
+	}
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		fmt.Println("Failed to connect to DB:", err)
@@ -51,11 +54,11 @@ func main() {
 	}
 
 	playerHandler := handlers.NewPlayerHandler(pool)
-	http.HandleFunc("/players", playerHandler.CreatePlayer)
+	http.HandleFunc("POST /players", playerHandler.CreatePlayer)
 
 	go func() {
 		logger.Info("Server started on :4200")
-		if err := http.ListenAndServe("4200"); err != http.ErrServerClosed {
+		if err := http.ListenAndServe(":4200", nil); err != http.ErrServerClosed {
 			logger.Error("ListenAndServe(): %s\n", err)
 			panic(err)
 		}
