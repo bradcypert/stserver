@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bradcypert/stserver/internal"
+	"github.com/bradcypert/stserver/internal/events"
 	"github.com/bradcypert/stserver/internal/handlers"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -42,13 +43,13 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	gameEngine := internal.NewGameEngine(logger, rdb)
+	gameEngine := internal.NewGameEngine(logger, rdb, pool)
 
 	// Start tick engine in background
 	go gameEngine.StartTickEngine(ctx)
 
 	// Simulate a scheduled build
-	err = scheduleBuildComplete("port-42", "trade_office", 10*time.Second)
+	err = scheduleBuildComplete(1, "trade_office", 10*time.Second)
 	if err != nil {
 		fmt.Println("Schedule error:", err)
 	}
@@ -75,10 +76,10 @@ func main() {
 	fmt.Println("Goodbye.")
 }
 
-func scheduleBuildComplete(portID, buildingType string, delay time.Duration) error {
+func scheduleBuildComplete(portID int32, buildingType string, delay time.Duration) error {
 	fmt.Println("Adding game event")
-	event := internal.GameEvent{
-		EventType:    internal.GameEventPortBuilding,
+	event := events.GameEvent{
+		EventType:    events.GameEventPortBuilding,
 		PortID:       portID,
 		BuildingType: buildingType,
 	}

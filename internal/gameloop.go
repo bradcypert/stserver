@@ -7,33 +7,23 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/bradcypert/stserver/internal/events"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
 type GameEngine struct {
 	logger *slog.Logger
 	redis  *redis.Client
+	pool   *pgxpool.Pool
 }
 
-func NewGameEngine(logger *slog.Logger, redis *redis.Client) GameEngine {
+func NewGameEngine(logger *slog.Logger, redis *redis.Client, pool *pgxpool.Pool) GameEngine {
 	return GameEngine{
 		logger,
 		redis,
+		pool,
 	}
-}
-
-type GameEventType int
-
-const (
-	GameEventPortBuilding GameEventType = iota
-	GameEventResourceCollect
-	GameEventShipConstruct
-)
-
-type GameEvent struct {
-	PortID       string        `json:"port_id"`
-	BuildingType string        `json:"building_type"`
-	EventType    GameEventType `json:"event_type"`
 }
 
 func (engine *GameEngine) StartTickEngine(ctx context.Context) {
@@ -47,7 +37,6 @@ func (engine *GameEngine) StartTickEngine(ctx context.Context) {
 			fmt.Println("Tick engine stopping...")
 			return
 		case <-ticker.C:
-			engine.logger.Debug("Tick")
 			engine.processDueEvents(ctx)
 		}
 	}
@@ -72,7 +61,7 @@ func (engine *GameEngine) processDueEvents(ctx context.Context) {
 	}
 
 	for _, raw := range events {
-		var event GameEvent
+		var event events.GameEvent
 		if err := json.Unmarshal([]byte(raw), &event); err != nil {
 			fmt.Println("Unmarshal error:", err)
 			continue
@@ -83,6 +72,13 @@ func (engine *GameEngine) processDueEvents(ctx context.Context) {
 	}
 }
 
-func (engine *GameEngine) handleEvent(_ context.Context, event GameEvent) {
-	engine.logger.Debug("Handling Event!", slog.Int("Event Type", int(event.EventType)), event.PortID, event.BuildingType)
+func (engine *GameEngine) handleEvent(_ context.Context, event events.GameEvent) {
+	if (event.EventType == events.GameEventPortBuilding) && (event.BuildingType != "") {
+		events.HandleBuildEvent(context.Background(), event, engine.pool)
+	}
+	engine.logger.Debug("Handling Event!",
+		slog.Int("Event Type", int(event.EventType)),
+		slog.Int("Port ID", int(event.PortID)),
+		slog.String("Building Type", event.BuildingType),
+	)
 }
