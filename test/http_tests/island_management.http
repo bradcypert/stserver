@@ -1,0 +1,136 @@
+### Get all building types (public endpoint)
+GET http://localhost:4200/building-types
+
+### Get production info for a specific building type
+GET http://localhost:4200/building-production?type=lumberyard
+
+### Get production info for plantation
+GET http://localhost:4200/building-production?type=plantation
+
+### Get production info for mine
+GET http://localhost:4200/building-production?type=mine
+
+### Get your island overview (requires authentication)
+GET http://localhost:4200/my-island
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### Construct a Lumberyard on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "lumberyard"
+}
+
+### Construct a Mine on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "mine"
+}
+
+### Construct a Plantation on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "plantation"
+}
+
+### Construct a Farm on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "farm"
+}
+
+### Construct a Trade Center on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "trade_center"
+}
+
+### Construct a Shipyard on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "shipyard"
+}
+
+### Construct a Warehouse on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "warehouse"
+}
+
+### Construct a Dock on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "dock"
+}
+
+### Construct a Tavern on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "tavern"
+}
+
+### Construct a Fort on your island (requires authentication and resources)
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "fort"
+}
+
+### Upgrade a building (replace 1 with actual building ID)
+POST http://localhost:4200/buildings/1/upgrade
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### Get updated island overview after construction/upgrades
+GET http://localhost:4200/my-island
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+####################
+# Building Categories & Costs Reference:
+####################
+
+# RESOURCE BUILDINGS:
+# - Lumberyard: 50 wood, 0 iron, 10 gold (5 min build) - Produces wood
+# - Mine: 30 wood, 10 iron, 25 gold (7.5 min build) - Produces iron, gold, silver
+# - Plantation: 40 wood, 0 iron, 15 gold (6 min build) - Produces sugar, tobacco, cotton, coffee
+# - Farm: 25 wood, 0 iron, 5 gold (4 min build) - Produces grain, rum
+
+# TRADE BUILDINGS:
+# - Trade Center: 100 wood, 50 iron, 100 gold (10 min build) - Enables trading
+
+# MILITARY BUILDINGS:
+# - Shipyard: 150 wood, 100 iron, 200 gold (15 min build) - Ship construction/repairs
+# - Fort: 100 wood, 200 iron, 150 gold (20 min build) - Island defense
+
+# INFRASTRUCTURE BUILDINGS:
+# - Warehouse: 80 wood, 20 iron, 30 gold (5 min build) - Storage capacity
+# - Dock: 60 wood, 30 iron, 20 gold (6 min build) - Ship docking/trade
+# - Tavern: 40 wood, 10 iron, 50 gold (5 min build) - Crew recruitment/morale

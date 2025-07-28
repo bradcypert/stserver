@@ -1,0 +1,43 @@
+### Sign up a new user
+POST http://localhost:4200/auth/signup
+Content-Type: application/json
+
+{
+  "email": "captain@example.com",
+  "password": "SecurePass123",
+  "display_name": "Captain Hook",
+  "faction": 2
+}
+
+### Verify email (use token from signup response)
+POST http://localhost:4200/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "REPLACE_WITH_TOKEN_FROM_SIGNUP"
+}
+
+### Login with verified user
+POST http://localhost:4200/auth/login
+Content-Type: application/json
+
+{
+  "email": "captain@example.com",
+  "password": "SecurePass123"
+}
+
+### Test protected endpoint - Create Port (requires JWT token)
+POST http://localhost:4200/ports
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "player_id": 1,
+  "name": "Blackbeard's Cove",
+  "x": 50,
+  "y": 75
+}
+
+### Test protected endpoint - Get Port (requires JWT token)
+GET http://localhost:4200/ports/1
+Authorization: Bearer YOUR_JWT_TOKEN_HERE

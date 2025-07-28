@@ -31,15 +31,18 @@ func (h *PlayerHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// We need to validate that you CAN build this building.
 	building, err := h.queries.GetBuildingByPortAndType(r.Context(), db.GetBuildingByPortAndTypeParams{
 		PortID: req.Port,
-		Type:   req.DisplayName,
+		Type:   req.BuildingType,
 	})
 	if err != nil {
 		http.Error(w, "could not get building: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// If validation passes, queue up the build event, after subtracting the resource cost from the players.
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(player)
+	json.NewEncoder(w).Encode(building)
 }

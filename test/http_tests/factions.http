@@ -1,0 +1,54 @@
+### Get all available factions (public endpoint)
+GET http://localhost:4200/factions
+
+### Get specific faction details (public endpoint)
+GET http://localhost:4200/factions/1
+
+### Get current player's faction (requires authentication)
+GET http://localhost:4200/player/faction
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### Join the British faction (requires authentication)
+POST http://localhost:4200/factions/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "faction_id": 2
+}
+
+### Join the French faction (requires authentication)
+POST http://localhost:4200/factions/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "faction_id": 3
+}
+
+### Join the Spanish faction (requires authentication)
+POST http://localhost:4200/factions/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "faction_id": 4
+}
+
+### Join the Dutch faction (requires authentication)
+POST http://localhost:4200/factions/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "faction_id": 5
+}
+
+### Become unaffiliated (pirate) (requires authentication)
+POST http://localhost:4200/factions/join
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "faction_id": 1
+}

@@ -8,21 +8,24 @@ import (
 	"time"
 
 	"github.com/bradcypert/stserver/internal/events"
+	"github.com/bradcypert/stserver/internal/island"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
 type GameEngine struct {
-	logger *slog.Logger
-	redis  *redis.Client
-	pool   *pgxpool.Pool
+	logger        *slog.Logger
+	redis         *redis.Client
+	pool          *pgxpool.Pool
+	islandService *island.Service
 }
 
 func NewGameEngine(logger *slog.Logger, redis *redis.Client, pool *pgxpool.Pool) GameEngine {
 	return GameEngine{
-		logger,
-		redis,
-		pool,
+		logger:        logger,
+		redis:         redis,
+		pool:          pool,
+		islandService: island.NewService(pool),
 	}
 }
 
@@ -38,6 +41,8 @@ func (engine *GameEngine) StartTickEngine(ctx context.Context) {
 			return
 		case <-ticker.C:
 			engine.processDueEvents(ctx)
+			engine.processResourceGeneration(ctx)
+			engine.processCompletedConstructions(ctx)
 		}
 	}
 }
@@ -46,21 +51,21 @@ func (engine *GameEngine) processDueEvents(ctx context.Context) {
 	engine.logger.Debug("Processing Due Events")
 	now := float64(time.Now().Unix())
 
-	events, err := engine.redis.ZRangeByScore(ctx, "game_events", &redis.ZRangeBy{
+	e, err := engine.redis.ZRangeByScore(ctx, "game_events", &redis.ZRangeBy{
 		Min:    "0",
 		Max:    fmt.Sprintf("%.0f", now),
 		Offset: 0,
 		Count:  250,
 	}).Result()
 
-	engine.logger.Debug("Collected events", slog.Int("Count", len(events)))
+	engine.logger.Debug("Collected events", slog.Int("Count", len(e)))
 
 	if err != nil {
 		fmt.Println("Tick error:", err)
 		return
 	}
 
-	for _, raw := range events {
+	for _, raw := range e {
 		var event events.GameEvent
 		if err := json.Unmarshal([]byte(raw), &event); err != nil {
 			fmt.Println("Unmarshal error:", err)
@@ -81,4 +86,20 @@ func (engine *GameEngine) handleEvent(_ context.Context, event events.GameEvent)
 		slog.Int("Port ID", int(event.PortID)),
 		slog.String("Building Type", event.BuildingType),
 	)
+}
+
+func (engine *GameEngine) processResourceGeneration(ctx context.Context) {
+	engine.logger.Debug("Processing Resource Generation")
+	err := engine.islandService.ProcessResourceGeneration(ctx)
+	if err != nil {
+		engine.logger.Error("Error processing resource generation", slog.String("error", err.Error()))
+	}
+}
+
+func (engine *GameEngine) processCompletedConstructions(ctx context.Context) {
+	engine.logger.Debug("Processing Completed Constructions")
+	err := engine.islandService.CompleteConstructions(ctx)
+	if err != nil {
+		engine.logger.Error("Error processing completed constructions", slog.String("error", err.Error()))
+	}
 }

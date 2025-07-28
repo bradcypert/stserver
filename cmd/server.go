@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bradcypert/stserver/internal"
+	"github.com/bradcypert/stserver/internal/auth"
 	"github.com/bradcypert/stserver/internal/events"
 	"github.com/bradcypert/stserver/internal/handlers"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -45,6 +46,13 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	gameEngine := internal.NewGameEngine(logger, rdb, pool)
 
+	// Setup auth service
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "dev-secret-key-change-in-production"
+	}
+	authService := auth.NewService(jwtSecret)
+
 	// Start tick engine in background
 	go gameEngine.StartTickEngine(ctx)
 
@@ -54,8 +62,30 @@ func main() {
 		fmt.Println("Schedule error:", err)
 	}
 
+	// Auth endpoints
+	authHandler := handlers.NewAuthHandler(pool, authService)
+	http.HandleFunc("POST /auth/signup", authHandler.Signup)
+	http.HandleFunc("POST /auth/login", authHandler.Login)
+	http.HandleFunc("POST /auth/verify-email", authHandler.VerifyEmail)
+
+	// Protected endpoints
 	playerHandler := handlers.NewPlayerHandler(pool)
-	http.HandleFunc("POST /players", playerHandler.CreatePlayer)
+	http.HandleFunc("POST /players", authService.RequireAuth(playerHandler.CreatePlayer))
+
+	// Faction endpoints
+	factionHandler := handlers.NewFactionHandler(pool)
+	http.HandleFunc("GET /factions", factionHandler.GetAllFactions)
+	http.HandleFunc("GET /factions/{id}", factionHandler.GetFaction)
+	http.HandleFunc("POST /factions/join", authService.RequireAuth(factionHandler.JoinFaction))
+	http.HandleFunc("GET /player/faction", authService.RequireAuth(factionHandler.GetPlayerFaction))
+
+	// Island Management endpoints
+	islandHandler := handlers.NewIslandHandler(pool)
+	http.HandleFunc("GET /my-island", authService.RequireAuth(islandHandler.GetPlayerIsland))
+	http.HandleFunc("POST /my-island/buildings", authService.RequireAuth(islandHandler.ConstructBuilding))
+	http.HandleFunc("POST /buildings/{building_id}/upgrade", authService.RequireAuth(islandHandler.UpgradeBuilding))
+	http.HandleFunc("GET /building-types", islandHandler.GetBuildingTypes)
+	http.HandleFunc("GET /building-production", islandHandler.GetBuildingProduction)
 
 	go func() {
 		logger.Info("Server started on :4200")
@@ -77,7 +107,6 @@ func main() {
 }
 
 func scheduleBuildComplete(portID int32, buildingType string, delay time.Duration) error {
-	fmt.Println("Adding game event")
 	event := events.GameEvent{
 		EventType:    events.GameEventPortBuilding,
 		PortID:       portID,

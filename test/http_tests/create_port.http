@@ -1,0 +1,16 @@
+### NOTE: Manual port creation is no longer available
+### Players automatically get one island when they sign up
+### Use the island management endpoints instead
+
+### See your island
+GET http://localhost:4200/my-island
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### Build on your island
+POST http://localhost:4200/my-island/buildings
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "building_type": "lumberyard"
+}
